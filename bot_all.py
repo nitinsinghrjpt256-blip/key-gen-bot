@@ -208,15 +208,17 @@ async def managekey(interaction: discord.Interaction, key: str):
     view = get_key_action_view(key.strip())
     await interaction.response.send_message(embed=embed, view=view)
 
-# Command 3: View All Keys Details in One Place
-@bot.tree.command(name="allkeys", description="View all panel keys list with full details")
-async def allkeys(interaction: discord.Interaction):
+# Command 3: Fetch Full Details of Any Specific Key
+@bot.tree.command(name="keyinfo", description="Get full details & status of any specific key")
+@discord.app_commands.describe(key="Enter the license key to check")
+async def keyinfo(interaction: discord.Interaction, key: str):
     await interaction.response.defer(ephemeral=True)
     
     payload = {
         "api_key": API_KEY,
-        "action": "list_keys",
-        "app_id": APP_ID
+        "action": "key_info",
+        "app_id": APP_ID,
+        "key": key.strip()
     }
     
     try:
@@ -224,33 +226,31 @@ async def allkeys(interaction: discord.Interaction):
         data = resp.json()
         
         if data.get("success"):
-            keys_list = data.get("data", [])
-            if not keys_list:
-                await interaction.followup.send("⚠️ No keys found in panel database.", ephemeral=True)
-                return
+            info = data.get("data", {}) or data
             
             embed = discord.Embed(
-                title=f"📊 Panel Keys Dashboard (Total: {len(keys_list)})",
-                color=0x8B5CF6
+                title="🔍 Key Information Details",
+                color=0x3B82F6
             )
+            embed.add_field(name="Key", value=f"`{key.strip()}`", inline=False)
             
-            lines = []
-            for idx, k in enumerate(keys_list[:25], 1):  # Discord limit: max 25 items per page
-                key_str = k.get("key", "N/A")
-                status = "🔴 Banned" if k.get("banned") else ("🟢 Active" if k.get("status") == "active" or k.get("used") else "🟡 Unused")
-                days = k.get("duration") or k.get("days") or "N/A"
-                hwid = "Registered" if k.get("hwid") else "No HWID"
-                
-                lines.append(f"**{idx}.** `{key_str}` | **Status:** {status} | **Days:** {days} | **HWID:** `{hwid}`")
+            status = "🔴 Banned" if info.get("banned") else ("🟢 Active" if info.get("status") == "active" or info.get("used") else "🟡 Unused")
+            embed.add_field(name="Status", value=status, inline=True)
             
-            embed.description = "\n".join(lines)
-            if len(keys_list) > 25:
-                embed.set_footer(text=f"Showing top 25 keys out of {len(keys_list)} total keys.")
+            duration = info.get("duration") or info.get("days") or "N/A"
+            embed.add_field(name="Duration", value=f"{duration} Days", inline=True)
+            
+            hwid = info.get("hwid") or "Not Registered"
+            embed.add_field(name="HWID", value=f"`{hwid}`", inline=False)
+            
+            if info.get("created_at"):
+                embed.add_field(name="Created At", value=str(info.get("created_at")), inline=True)
                 
-            await interaction.followup.send(embed=embed, ephemeral=True)
+            view = get_key_action_view(key.strip())
+            await interaction.followup.send(embed=embed, view=view, ephemeral=True)
         else:
-            msg = data.get("message", "Could not fetch key list from server.")
-            await interaction.followup.send(f"❌ Failed to fetch keys: `{msg}`", ephemeral=True)
+            msg = data.get("message", "Key not found or invalid.")
+            await interaction.followup.send(f"❌ Error: `{msg}`", ephemeral=True)
             
     except Exception as e:
         await interaction.followup.send(f"⚠️ API Error: {str(e)}", ephemeral=True)
