@@ -9,7 +9,7 @@ import requests
 from flask import Flask
 
 # ==========================================
-# 1. 24/7 KEEP-ALIVE WEB SERVER (Render Free Web Service)
+# 1. 24/7 KEEP-ALIVE WEB SERVER
 # ==========================================
 app = Flask("")
 
@@ -50,7 +50,7 @@ def start_server():
 start_server()
 
 # ==========================================
-# 2. ADVANCED KEY GENERATOR BOT CONFIG
+# 2. BOT CONFIGURATION & CREDENTIALS
 # ==========================================
 
 TOKEN = os.getenv("DISCORD_TOKEN")
@@ -96,9 +96,43 @@ def parse_keys(data):
     return keys
 
 
+# Function to build Action Buttons
+def get_key_action_view(key: str):
+    view = discord.ui.View()
+    view.add_item(
+        discord.ui.Button(
+            label="Reset HWID",
+            custom_id=f"reset_hwid:{key}",
+            style=discord.ButtonStyle.primary,
+        )
+    )
+    view.add_item(
+        discord.ui.Button(
+            label="Ban",
+            custom_id=f"ban_key:{key}",
+            style=discord.ButtonStyle.danger,
+        )
+    )
+    view.add_item(
+        discord.ui.Button(
+            label="Unban",
+            custom_id=f"unban_key:{key}",
+            style=discord.ButtonStyle.success,
+        )
+    )
+    view.add_item(
+        discord.ui.Button(
+            label="Delete",
+            custom_id=f"delete_key:{key}",
+            style=discord.ButtonStyle.secondary,
+        )
+    )
+    return view
+
+
 @bot.event
 async def on_ready():
-    print(f"Logged in as All-Packages Bot: {bot.user.name}")
+    print(f"Logged in as Key Manager Bot: {bot.user.name}")
     try:
         guild = discord.Object(id=GUILD_ID)
         bot.tree.copy_global_to(guild=guild)
@@ -115,6 +149,8 @@ async def on_interaction(interaction: discord.Interaction):
         custom_id = interaction.data.get("custom_id", "")
         if ":" in custom_id:
             action, key = custom_id.split(":", 1)
+            if action == "delete_key":
+                action = "delete_lib_key"
             await interaction.response.defer(ephemeral=True)
             try:
                 payload = {
@@ -144,7 +180,7 @@ async def on_interaction(interaction: discord.Interaction):
                 )
 
 
-# Slash Command: Generate Normal Package Keys
+# Command 1: Generate Package Keys
 @bot.tree.command(
     name="genkey", description="Generate License Keys for Normal Packages"
 )
@@ -222,38 +258,7 @@ async def genkey(
 
             embed.add_field(name="Keys", value=formatted_keys, inline=False)
 
-            view = None
-            if len(keys) == 1:
-                target_key = keys[0]
-                view = discord.ui.View()
-                view.add_item(
-                    discord.ui.Button(
-                        label="Reset HWID",
-                        custom_id=f"reset_hwid:{target_key}",
-                        style=discord.ButtonStyle.primary,
-                    )
-                )
-                view.add_item(
-                    discord.ui.Button(
-                        label="Ban",
-                        custom_id=f"ban_key:{target_key}",
-                        style=discord.ButtonStyle.danger,
-                    )
-                )
-                view.add_item(
-                    discord.ui.Button(
-                        label="Unban",
-                        custom_id=f"unban_key:{target_key}",
-                        style=discord.ButtonStyle.success,
-                    )
-                )
-                view.add_item(
-                    discord.ui.Button(
-                        label="Delete",
-                        custom_id=f"delete_key:{target_key}",
-                        style=discord.ButtonStyle.secondary,
-                    )
-                )
+            view = get_key_action_view(keys[0]) if len(keys) == 1 else None
 
             if view:
                 await interaction.followup.send(embed=embed, view=view)
@@ -271,6 +276,22 @@ async def genkey(
         await interaction.followup.send(
             f"⚠️ API Communication Error: {str(e)}", ephemeral=True
         )
+
+
+# Command 2: Manage Any Existing/Old Key
+@bot.tree.command(
+    name="managekey",
+    description="Manage any old/existing Key (HWID Reset, Ban, Unban, Delete)",
+)
+@discord.app_commands.describe(key="Enter the key you want to manage")
+async def managekey(interaction: discord.Interaction, key: str):
+    embed = discord.Embed(
+        title="⚙️ Key Control Panel",
+        description=f"Select an action for key:\n`{key}`",
+        color=0x3B82F6,
+    )
+    view = get_key_action_view(key.strip())
+    await interaction.response.send_message(embed=embed, view=view)
 
 
 bot.run(TOKEN)
