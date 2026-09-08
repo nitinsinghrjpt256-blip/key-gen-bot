@@ -207,6 +207,63 @@ async def genkey(
     except Exception as e:
         await interaction.followup.send(f"⚠️ API Communication Error: {str(e)}", ephemeral=True)
 
+@bot.tree.command(name="listkeys", description="View list of all generated keys and their status")
+async def listkeys(interaction: discord.Interaction):
+    if interaction.user.id != OWNER_ID:
+        await interaction.response.send_message("❌ Yeh command sirf Bot Owner use kar sakta hai!", ephemeral=True)
+        return
+
+    await interaction.response.defer(ephemeral=True)
+    
+    payload = {
+        "api_key": API_KEY,
+        "action": "list_keys",
+        "app_id": APP_ID
+    }
+    
+    try:
+        resp = requests.post(API_URL, data=payload, headers=HEADERS, timeout=10)
+        data = resp.json()
+        
+        if data.get("success"):
+            keys_data = data.get("data", [])
+            
+            if not keys_data:
+                await interaction.followup.send("⚠️ Aapke panel me koi bhi key nahi mili.", ephemeral=True)
+                return
+
+            embed = discord.Embed(
+                title="📋 All License Keys List",
+                description=f"Total Keys found: {len(keys_data)}",
+                color=0x3B82F6
+            )
+            
+            count = 0
+            for item in keys_data[:15]:
+                if isinstance(item, dict):
+                    k_str = item.get("key", "N/A")
+                    pkg = item.get("package_name", "Package")
+                    status = "Active" if not item.get("banned") else "Banned"
+                    note = item.get("note", "None")
+                    
+                    embed.add_field(
+                        name=f"Key: `{k_str[:15]}...`",
+                        value=f"**Package:** {pkg}\n**Status:** {status}\n**Note:** {note}",
+                        inline=False
+                    )
+                    count += 1
+
+            if len(keys_data) > 15:
+                embed.set_footer(text=f"Showing first 15 keys out of {len(keys_data)} total keys.")
+                
+            await interaction.followup.send(embed=embed, ephemeral=True)
+        else:
+            msg = data.get("message", "Failed to fetch keys list from API.")
+            await interaction.followup.send(f"❌ Error: `{msg}`", ephemeral=True)
+            
+    except Exception as e:
+        await interaction.followup.send(f"⚠️ API Communication Error: {str(e)}", ephemeral=True)
+
 @bot.tree.command(name="managekey", description="Manage any key (HWID Reset, Ban, Unban, Delete)")
 @discord.app_commands.describe(key="Enter the key you want to manage")
 async def managekey(interaction: discord.Interaction, key: str):
@@ -290,4 +347,3 @@ async def resethwid(interaction: discord.Interaction, key: str):
         await interaction.followup.send(f"⚠️ API Error: {str(e)}", ephemeral=True)
 
 bot.run(TOKEN)
-        
