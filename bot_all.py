@@ -49,7 +49,7 @@ start_server()
 # ==========================================
 
 TOKEN = os.getenv("DISCORD_TOKEN")
-GUILD_ID = 1525181999147388958
+GUILD_ID = 1546961557160861737
 
 API_URL = "https://auth.terminalx999.online/api_admin.php"
 API_KEY = "TX999_1fc0134c4c418cf9f0817f355ac10cf7e5f73cf899a83bbf4731e4eec3929870"
