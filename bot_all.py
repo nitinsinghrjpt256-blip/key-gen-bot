@@ -50,6 +50,7 @@ start_server()
 
 TOKEN = os.getenv("DISCORD_TOKEN")
 GUILD_ID = 1525181999147388958
+OWNER_ID = 1525179499602509977
 
 API_URL = "https://auth.terminalx999.online/api_admin.php"
 API_KEY = "TX999_1fc0134c4c418cf9f0817f355ac10cf7e5f73cf899a83bbf4731e4eec3929870"
@@ -111,8 +112,6 @@ async def on_interaction(interaction: discord.Interaction):
         custom_id = interaction.data.get("custom_id", "")
         if ":" in custom_id:
             action, key = custom_id.split(":", 1)
-            if action == "delete_key":
-                action = "delete_lib_key"
             await interaction.response.defer(ephemeral=True)
             try:
                 payload = {
@@ -136,8 +135,7 @@ async def on_interaction(interaction: discord.Interaction):
 # 4. BOT COMMANDS
 # ==========================================
 
-# Command 1: Generate Package Keys
-@bot.tree.command(name="genkey", description="Generate License Keys for Normal Packages")
+@bot.tree.command(name="genkey", description="Generate License Keys")
 @discord.app_commands.choices(package=[
     discord.app_commands.Choice(name="BASIC PANEL", value="e52c1515c53453b85d0d4e87"),
     discord.app_commands.Choice(name="AIMSILENT EXE", value="affc8da8fd5ace99981ab877"),
@@ -159,6 +157,10 @@ async def genkey(
     count: int = 1,
     note: str = ""
 ):
+    if interaction.user.id != OWNER_ID:
+        await interaction.response.send_message("❌ Yeh command sirf Bot Owner use kar sakta hai!", ephemeral=True)
+        return
+
     await interaction.response.defer(ephemeral=False)
     
     payload = {
@@ -184,7 +186,7 @@ async def genkey(
             embed.add_field(name="Count", value=str(len(keys)), inline=True)
             
             if note:
-                embed.add_field(name="Note", value=`{note}`, inline=False)
+                embed.add_field(name="Note", value=f"`{note}`", inline=False)
                 
             formatted_keys = "\n".join([f"`{k}`" for k in keys[:20]])
             if len(keys) > 20:
@@ -205,7 +207,6 @@ async def genkey(
     except Exception as e:
         await interaction.followup.send(f"⚠️ API Communication Error: {str(e)}", ephemeral=True)
 
-# Command 2: Manage Any Existing Key with Buttons
 @bot.tree.command(name="managekey", description="Manage any key (HWID Reset, Ban, Unban, Delete)")
 @discord.app_commands.describe(key="Enter the key you want to manage")
 async def managekey(interaction: discord.Interaction, key: str):
@@ -217,7 +218,6 @@ async def managekey(interaction: discord.Interaction, key: str):
     view = get_key_action_view(key.strip())
     await interaction.response.send_message(embed=embed, view=view)
 
-# Command 3: Get Full Details of Any Specific Key
 @bot.tree.command(name="keyinfo", description="Get full details & status of any specific key")
 @discord.app_commands.describe(key="Enter the license key to check")
 async def keyinfo(interaction: discord.Interaction, key: str):
@@ -264,7 +264,6 @@ async def keyinfo(interaction: discord.Interaction, key: str):
     except Exception as e:
         await interaction.followup.send(f"⚠️ API Error: {str(e)}", ephemeral=True)
 
-# Command 4: Reset HWID for any Old/Existing Key Directly
 @bot.tree.command(name="resethwid", description="Reset HWID lock for any existing key")
 @discord.app_commands.describe(key="Enter the key to reset its HWID")
 async def resethwid(interaction: discord.Interaction, key: str):
@@ -291,3 +290,4 @@ async def resethwid(interaction: discord.Interaction, key: str):
         await interaction.followup.send(f"⚠️ API Error: {str(e)}", ephemeral=True)
 
 bot.run(TOKEN)
+        
