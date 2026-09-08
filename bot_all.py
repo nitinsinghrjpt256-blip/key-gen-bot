@@ -13,16 +13,13 @@ from flask import Flask
 # ==========================================
 app = Flask("")
 
-
 @app.route("/")
 def home():
     return "Bot is alive and running 24/7 on Render!"
 
-
 def run_http_server():
     port = int(os.environ.get("PORT", 8080))
     app.run(host="0.0.0.0", port=port)
-
 
 def self_ping():
     time.sleep(10)
@@ -36,7 +33,6 @@ def self_ping():
             print(f"Ping failed: {e}")
         time.sleep(600)
 
-
 def start_server():
     server_thread = threading.Thread(target=run_http_server)
     server_thread.daemon = True
@@ -45,7 +41,6 @@ def start_server():
     ping_thread = threading.Thread(target=self_ping)
     ping_thread.daemon = True
     ping_thread.start()
-
 
 start_server()
 
@@ -57,36 +52,27 @@ TOKEN = os.getenv("DISCORD_TOKEN")
 GUILD_ID = 1525181999147388958
 
 API_URL = "https://auth.terminalx999.online/api_admin.php"
-API_KEY = (
-    "TX999_1fc0134c4c418cf9f0817f355ac10cf7e5f73cf899a83bbf4731e4eec3929870"
-)
+API_KEY = "TX999_1fc0134c4c418cf9f0817f355ac10cf7e5f73cf899a83bbf4731e4eec3929870"
 APP_ID = "9f087d585fbd666572fc24b7"
 
 HEADERS = {
-    "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36"
+    'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36'
 }
 
 intents = discord.Intents.default()
 bot = commands.Bot(command_prefix="!", intents=intents)
 
-
 def parse_keys(data):
     keys = []
     raw = data.get("data")
     if isinstance(raw, list):
-        keys = [
-            str(i.get("key", i)) if isinstance(i, dict) else str(i) for i in raw
-        ]
+        keys = [str(i.get("key", i)) if isinstance(i, dict) else str(i) for i in raw]
     elif isinstance(raw, dict):
         k_list = raw.get("keys") or raw.get("key") or raw.get("key_list") or []
-        keys = (
-            [str(k) for k in k_list]
-            if isinstance(k_list, list)
-            else ([str(k_list)] if k_list else [])
-        )
+        keys = [str(k) for k in k_list] if isinstance(k_list, list) else ([str(k_list)] if k_list else [])
     elif isinstance(raw, str):
         keys = [raw]
-
+    
     if not keys:
         top = data.get("key") or data.get("keys")
         if isinstance(top, list):
@@ -95,40 +81,13 @@ def parse_keys(data):
             keys = [top]
     return keys
 
-
-# Function to build Action Buttons
 def get_key_action_view(key: str):
     view = discord.ui.View()
-    view.add_item(
-        discord.ui.Button(
-            label="Reset HWID",
-            custom_id=f"reset_hwid:{key}",
-            style=discord.ButtonStyle.primary,
-        )
-    )
-    view.add_item(
-        discord.ui.Button(
-            label="Ban",
-            custom_id=f"ban_key:{key}",
-            style=discord.ButtonStyle.danger,
-        )
-    )
-    view.add_item(
-        discord.ui.Button(
-            label="Unban",
-            custom_id=f"unban_key:{key}",
-            style=discord.ButtonStyle.success,
-        )
-    )
-    view.add_item(
-        discord.ui.Button(
-            label="Delete",
-            custom_id=f"delete_key:{key}",
-            style=discord.ButtonStyle.secondary,
-        )
-    )
+    view.add_item(discord.ui.Button(label="Reset HWID", custom_id=f"reset_hwid:{key}", style=discord.ButtonStyle.primary))
+    view.add_item(discord.ui.Button(label="Ban", custom_id=f"ban_key:{key}", style=discord.ButtonStyle.danger))
+    view.add_item(discord.ui.Button(label="Unban", custom_id=f"unban_key:{key}", style=discord.ButtonStyle.success))
+    view.add_item(discord.ui.Button(label="Delete", custom_id=f"delete_key:{key}", style=discord.ButtonStyle.secondary))
     return view
-
 
 @bot.event
 async def on_ready():
@@ -141,8 +100,6 @@ async def on_ready():
     except Exception as e:
         print(f"Sync error: {e}")
 
-
-# Action Buttons Listener
 @bot.event
 async def on_interaction(interaction: discord.Interaction):
     if interaction.type == discord.InteractionType.component:
@@ -157,70 +114,44 @@ async def on_interaction(interaction: discord.Interaction):
                     "api_key": API_KEY,
                     "action": action,
                     "key": key,
-                    "app_id": APP_ID,
+                    "app_id": APP_ID
                 }
-                resp = requests.post(
-                    API_URL, data=payload, headers=HEADERS, timeout=10
-                )
+                resp = requests.post(API_URL, data=payload, headers=HEADERS, timeout=10)
                 res_data = resp.json()
-
+                
                 if res_data.get("success"):
-                    await interaction.followup.send(
-                        f"✓ Action **{action.upper()}** completed successfully for key:\n`{key}`",
-                        ephemeral=True,
-                    )
+                    await interaction.followup.send(f"✓ Action **{action.upper()}** completed successfully for key:\n`{key}`", ephemeral=True)
                 else:
                     msg = res_data.get("message", "Unknown response")
-                    await interaction.followup.send(
-                        f"❌ Failed: {msg}", ephemeral=True
-                    )
+                    await interaction.followup.send(f"❌ Failed: {msg}", ephemeral=True)
             except Exception as e:
-                await interaction.followup.send(
-                    f"⚠️ Error executing action: {str(e)}", ephemeral=True
-                )
-
+                await interaction.followup.send(f"⚠️ Error executing action: {str(e)}", ephemeral=True)
 
 # Command 1: Generate Package Keys
-@bot.tree.command(
-    name="genkey", description="Generate License Keys for Normal Packages"
-)
-@discord.app_commands.choices(
-    package=[
-        discord.app_commands.Choice(
-            name="BASIC PANEL", value="e52c1515c53453b85d0d4e87"
-        ),
-        discord.app_commands.Choice(
-            name="AIMSILENT EXE", value="affc8da8fd5ace99981ab877"
-        ),
-        discord.app_commands.Choice(
-            name="UID BYPASS", value="cb921031dc43197e8ccb6828"
-        ),
-        discord.app_commands.Choice(
-            name="EXTERNAL PANEL", value="3d1c6c948b4715fbd2fada2d"
-        ),
-        discord.app_commands.Choice(
-            name="PVT AIMKILL", value="d4f0ce93349f236711344cb5"
-        ),
-        discord.app_commands.Choice(
-            name="VAULT PANEL", value="154d1edaddd7203fbfd847f4"
-        ),
-    ]
-)
+@bot.tree.command(name="genkey", description="Generate License Keys for Normal Packages")
+@discord.app_commands.choices(package=[
+    discord.app_commands.Choice(name="BASIC PANEL", value="e52c1515c53453b85d0d4e87"),
+    discord.app_commands.Choice(name="AIMSILENT EXE", value="affc8da8fd5ace99981ab877"),
+    discord.app_commands.Choice(name="UID BYPASS", value="cb921031dc43197e8ccb6828"),
+    discord.app_commands.Choice(name="EXTERNAL PANEL", value="3d1c6c948b4715fbd2fada2d"),
+    discord.app_commands.Choice(name="PVT AIMKILL", value="d4f0ce93349f236711344cb5"),
+    discord.app_commands.Choice(name="VAULT PANEL", value="154d1edaddd7203fbfd847f4")
+])
 @discord.app_commands.describe(
     package="Select target package",
     days="Number of validity days (0 = lifetime)",
     count="Number of keys (max 500)",
-    note="Optional note (e.g. customer name/batch)",
+    note="Optional note (e.g. customer name/batch)"
 )
 async def genkey(
     interaction: discord.Interaction,
     package: discord.app_commands.Choice[str],
     days: int = 30,
     count: int = 1,
-    note: str = "",
+    note: str = ""
 ):
     await interaction.response.defer(ephemeral=False)
-
+    
     payload = {
         "api_key": API_KEY,
         "action": "generate_key",
@@ -228,70 +159,100 @@ async def genkey(
         "package_id": package.value,
         "days": days,
         "count": count,
-        "note": note,
+        "note": note
     }
-
+    
     try:
-        resp = requests.post(
-            API_URL, data=payload, headers=HEADERS, timeout=10
-        )
+        resp = requests.post(API_URL, data=payload, headers=HEADERS, timeout=10)
         data = resp.json()
-
+        
         if data.get("success"):
             keys = parse_keys(data)
             dur = "Lifetime" if days == 0 else f"{days} Days"
-            embed = discord.Embed(
-                title="🔑 Package License Key Generated", color=0x22C55E
-            )
-            embed.add_field(
-                name="Package Name", value=f"**{package.name}**", inline=True
-            )
+            embed = discord.Embed(title="🔑 Package License Key Generated", color=0x22C55E)
+            embed.add_field(name="Package Name", value=f"**{package.name}**", inline=True)
             embed.add_field(name="Duration", value=dur, inline=True)
             embed.add_field(name="Count", value=str(len(keys)), inline=True)
-
+            
             if note:
                 embed.add_field(name="Note", value=f"`{note}`", inline=False)
-
+                
             formatted_keys = "\n".join([f"`{k}`" for k in keys[:20]])
             if len(keys) > 20:
                 formatted_keys += f"\n... and {len(keys) - 20} more keys"
-
+                
             embed.add_field(name="Keys", value=formatted_keys, inline=False)
-
+            
             view = get_key_action_view(keys[0]) if len(keys) == 1 else None
-
+            
             if view:
                 await interaction.followup.send(embed=embed, view=view)
             else:
                 await interaction.followup.send(embed=embed)
         else:
-            err_msg = data.get(
-                "message", "No keys returned from API response."
-            )
-            await interaction.followup.send(
-                f"❌ Generation Failed: `{err_msg}`", ephemeral=True
-            )
-
+            err_msg = data.get("message", "No keys returned from API response.")
+            await interaction.followup.send(f"❌ Generation Failed: `{err_msg}`", ephemeral=True)
+            
     except Exception as e:
-        await interaction.followup.send(
-            f"⚠️ API Communication Error: {str(e)}", ephemeral=True
-        )
+        await interaction.followup.send(f"⚠️ API Communication Error: {str(e)}", ephemeral=True)
 
-
-# Command 2: Manage Any Existing/Old Key
-@bot.tree.command(
-    name="managekey",
-    description="Manage any old/existing Key (HWID Reset, Ban, Unban, Delete)",
-)
+# Command 2: Manage Any Existing Key
+@bot.tree.command(name="managekey", description="Manage any key (HWID Reset, Ban, Unban, Delete)")
 @discord.app_commands.describe(key="Enter the key you want to manage")
 async def managekey(interaction: discord.Interaction, key: str):
     embed = discord.Embed(
         title="⚙️ Key Control Panel",
         description=f"Select an action for key:\n`{key}`",
-        color=0x3B82F6,
+        color=0x3B82F6
     )
     view = get_key_action_view(key.strip())
     await interaction.response.send_message(embed=embed, view=view)
 
+# Command 3: View All Keys Details in One Place
+@bot.tree.command(name="allkeys", description="View all panel keys list with full details")
+async def allkeys(interaction: discord.Interaction):
+    await interaction.response.defer(ephemeral=True)
+    
+    payload = {
+        "api_key": API_KEY,
+        "action": "list_keys",
+        "app_id": APP_ID
+    }
+    
+    try:
+        resp = requests.post(API_URL, data=payload, headers=HEADERS, timeout=10)
+        data = resp.json()
+        
+        if data.get("success"):
+            keys_list = data.get("data", [])
+            if not keys_list:
+                await interaction.followup.send("⚠️ No keys found in panel database.", ephemeral=True)
+                return
+            
+            embed = discord.Embed(
+                title=f"📊 Panel Keys Dashboard (Total: {len(keys_list)})",
+                color=0x8B5CF6
+            )
+            
+            lines = []
+            for idx, k in enumerate(keys_list[:25], 1):  # Discord limit: max 25 items per page
+                key_str = k.get("key", "N/A")
+                status = "🔴 Banned" if k.get("banned") else ("🟢 Active" if k.get("status") == "active" or k.get("used") else "🟡 Unused")
+                days = k.get("duration") or k.get("days") or "N/A"
+                hwid = "Registered" if k.get("hwid") else "No HWID"
+                
+                lines.append(f"**{idx}.** `{key_str}` | **Status:** {status} | **Days:** {days} | **HWID:** `{hwid}`")
+            
+            embed.description = "\n".join(lines)
+            if len(keys_list) > 25:
+                embed.set_footer(text=f"Showing top 25 keys out of {len(keys_list)} total keys.")
+                
+            await interaction.followup.send(embed=embed, ephemeral=True)
+        else:
+            msg = data.get("message", "Could not fetch key list from server.")
+            await interaction.followup.send(f"❌ Failed to fetch keys: `{msg}`", ephemeral=True)
+            
+    except Exception as e:
+        await interaction.followup.send(f"⚠️ API Error: {str(e)}", ephemeral=True)
 
 bot.run(TOKEN)
