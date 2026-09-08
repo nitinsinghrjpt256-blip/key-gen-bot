@@ -53,7 +53,7 @@ start_server()
 # 2. ADVANCED KEY GENERATOR BOT CONFIG
 # ==========================================
 
-TOKEN = os.getenv("MTU0NjkzMjUzMTIwMTU3NzE1Mg.Gzn-SA.jf403tOOkccXsdfb1c5hySl6ISN9Nad5kRbm6w")
+TOKEN = os.getenv("DISCORD_TOKEN")
 GUILD_ID = 1525181999147388958
 
 API_URL = "https://auth.terminalx999.online/api_admin.php"
