@@ -184,7 +184,7 @@ async def genkey(
         if data.get("success"):
             keys = parse_keys(data)
             dur = "Lifetime" if days == 0 else f"{days} Days"
-            embed = discord.Embed(title="🔑 Package License Key Generated", color=0x22C55E)
+            embed = discord.Embed(title="🔑 FREE KEY BY PERSISTX", color=0x22C55E)
             embed.add_field(name="Package Name", value=f"**{package.name}**", inline=True)
             embed.add_field(name="Duration", value=dur, inline=True)
             embed.add_field(name="Count", value=str(len(keys)), inline=True)
