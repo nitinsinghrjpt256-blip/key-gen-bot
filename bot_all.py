@@ -50,10 +50,7 @@ start_server()
 
 TOKEN = os.getenv("DISCORD_TOKEN")
 GUILD_ID = 1525181999147388958
-
-ALLOWED_USER_IDS = [
-    1525179499602509977,
-]
+OWNER_ID = 1525179499602509977
 
 LOG_CHANNEL_ID = 1547688035796254941  # Logs channel ID
 
@@ -114,7 +111,7 @@ async def on_ready():
 @bot.event
 async def on_interaction(interaction: discord.Interaction):
     if interaction.type == discord.InteractionType.component:
-        if interaction.user.id not in ALLOWED_USER_IDS:
+        if interaction.user.id != OWNER_ID:
             await interaction.response.send_message("❌ Contact super admin PERSISTX", ephemeral=True)
             return
 
@@ -167,7 +164,7 @@ async def genkey(
     count: int = 1,
     note: str = ""
 ):
-    if interaction.user.id not in ALLOWED_USER_IDS:
+    if interaction.user.id != OWNER_ID:
         await interaction.response.send_message("❌ Contact super admin PERSISTX", ephemeral=True)
         return
 
@@ -191,7 +188,7 @@ async def genkey(
             keys = parse_keys(data)
             dur_text = "Lifetime" if days == 0 else f"{days} Days"
             
-            # Send log to the specified channel
+            # Send info to log channel in the requested format
             log_channel = bot.get_channel(LOG_CHANNEL_ID)
             if log_channel:
                 for k in keys:
@@ -230,7 +227,7 @@ async def genkey(
 @discord.app_commands.default_member_permissions(administrator=True)
 @discord.app_commands.describe(key="Enter the key you want to manage")
 async def managekey(interaction: discord.Interaction, key: str):
-    if interaction.user.id not in ALLOWED_USER_IDS:
+    if interaction.user.id != OWNER_ID:
         await interaction.response.send_message("❌ Contact super admin PERSISTX", ephemeral=True)
         return
 
@@ -246,7 +243,7 @@ async def managekey(interaction: discord.Interaction, key: str):
 @discord.app_commands.default_member_permissions(administrator=True)
 @discord.app_commands.describe(key="Enter the license key to check")
 async def keyinfo(interaction: discord.Interaction, key: str):
-    if interaction.user.id not in ALLOWED_USER_IDS:
+    if interaction.user.id != OWNER_ID:
         await interaction.response.send_message("❌ Contact super admin PERSISTX", ephemeral=True)
         return
 
@@ -297,7 +294,7 @@ async def keyinfo(interaction: discord.Interaction, key: str):
 @discord.app_commands.default_member_permissions(administrator=True)
 @discord.app_commands.describe(key="Enter the key to reset its HWID")
 async def resethwid(interaction: discord.Interaction, key: str):
-    if interaction.user.id not in ALLOWED_USER_IDS:
+    if interaction.user.id != OWNER_ID:
         await interaction.response.send_message("❌ Contact super admin PERSISTX", ephemeral=True)
         return
 
