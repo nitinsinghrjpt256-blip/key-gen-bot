@@ -50,7 +50,11 @@ start_server()
 
 TOKEN = os.getenv("DISCORD_TOKEN")
 GUILD_ID = 1525181999147388958
-OWNER_ID = 1525179499602509977
+
+# Sirf yeh ek hi user ID allowed hai
+ALLOWED_USER_IDS = [
+    1525179499602509977,
+]
 
 API_URL = "https://auth.terminalx999.online/api_admin.php"
 API_KEY = "TX999_1fc0134c4c418cf9f0817f355ac10cf7e5f73cf899a83bbf4731e4eec3929870"
@@ -109,7 +113,7 @@ async def on_ready():
 @bot.event
 async def on_interaction(interaction: discord.Interaction):
     if interaction.type == discord.InteractionType.component:
-        if interaction.user.id != OWNER_ID:
+        if interaction.user.id not in ALLOWED_USER_IDS:
             await interaction.response.send_message("❌ Contact super admin PERSISTX", ephemeral=True)
             return
 
@@ -161,7 +165,7 @@ async def genkey(
     count: int = 1,
     note: str = ""
 ):
-    if interaction.user.id != OWNER_ID:
+    if interaction.user.id not in ALLOWED_USER_IDS:
         await interaction.response.send_message("❌ Contact super admin PERSISTX", ephemeral=True)
         return
 
@@ -214,7 +218,7 @@ async def genkey(
 @bot.tree.command(name="managekey", description="Manage any key (HWID Reset, Ban, Unban, Delete)")
 @discord.app_commands.describe(key="Enter the key you want to manage")
 async def managekey(interaction: discord.Interaction, key: str):
-    if interaction.user.id != OWNER_ID:
+    if interaction.user.id not in ALLOWED_USER_IDS:
         await interaction.response.send_message("❌ Contact super admin PERSISTX", ephemeral=True)
         return
 
@@ -229,7 +233,7 @@ async def managekey(interaction: discord.Interaction, key: str):
 @bot.tree.command(name="keyinfo", description="Get full details & status of any specific key")
 @discord.app_commands.describe(key="Enter the license key to check")
 async def keyinfo(interaction: discord.Interaction, key: str):
-    if interaction.user.id != OWNER_ID:
+    if interaction.user.id not in ALLOWED_USER_IDS:
         await interaction.response.send_message("❌ Contact super admin PERSISTX", ephemeral=True)
         return
 
@@ -279,7 +283,7 @@ async def keyinfo(interaction: discord.Interaction, key: str):
 @bot.tree.command(name="resethwid", description="Reset HWID lock for any existing key")
 @discord.app_commands.describe(key="Enter the key to reset its HWID")
 async def resethwid(interaction: discord.Interaction, key: str):
-    if interaction.user.id != OWNER_ID:
+    if interaction.user.id not in ALLOWED_USER_IDS:
         await interaction.response.send_message("❌ Contact super admin PERSISTX", ephemeral=True)
         return
 
