@@ -141,7 +141,7 @@ async def on_interaction(interaction: discord.Interaction):
 # 4. BOT COMMANDS
 # ==========================================
 
-@bot.tree.command(name="genkey", description="Generate License Keys")
+@bot.tree.command(name="genkey", description="Generate License Keys in a Table Format")
 @discord.app_commands.choices(package=[
     discord.app_commands.Choice(name="BASIC PANEL", value="e52c1515c53453b85d0d4e87"),
     discord.app_commands.Choice(name="AIMSILENT EXE", value="affc8da8fd5ace99981ab877"),
@@ -186,134 +186,26 @@ async def genkey(
         if data.get("success"):
             keys = parse_keys(data)
             dur_text = "Lifetime" if days == 0 else f"{days} Days"
+            note_str = note if note else "N/A"
             
-            # Send info to log channel in the requested format
+            # Log channel me table format me send karna
             log_channel = bot.get_channel(LOG_CHANNEL_ID)
             if log_channel:
+                log_table = "```markdown\n"
+                log_table += "| LICENSE KEY          | PACKAGE       | DURATION   | NOTE        |\n"
+                log_table += "|----------------------|---------------|------------|-------------|\n"
                 for k in keys:
-                    note_str = note if note else "N/A"
-                    log_msg = f"`{k}` : `{note_str}` ; `{dur_text}` ; `{package.name}`"
-                    await log_channel.send(log_msg)
+                    log_table += f"| {k:<20} | {package.name[:13]:<13} | {dur_text:<10} | {note_str[:11]:<11} |\n"
+                log_table += "```"
+                await log_channel.send(log_table)
 
-            embed = discord.Embed(title="🔑 Package License Key Generated", color=0x22C55E)
-            embed.add_field(name="Package Name", value=f"**{package.name}**", inline=True)
-            embed.add_field(name="Duration", value=dur_text, inline=True)
-            embed.add_field(name="Count", value=str(len(keys)), inline=True)
+            # User interface ke liye Table Embed banana
+            embed = discord.Embed(title="📊 License Key Generation Table", color=0x5865F2)
+            embed.description = "Aapki nayi keys ka table format niche diya gaya hai:"
             
-            if note:
-                embed.add_field(name="Note", value=f"`{note}`", inline=False)
-                
-            formatted_keys = "\n".join([f"`{k}`" for k in keys[:20]])
-            if len(keys) > 20:
-                formatted_keys += f"\n... and {len(keys) - 20} more keys"
-                
-            embed.add_field(name="Keys", value=formatted_keys, inline=False)
-            
-            view = get_key_action_view(keys[0]) if len(keys) == 1 else None
-            
-            if view:
-                await interaction.followup.send(embed=embed, view=view)
-            else:
-                await interaction.followup.send(embed=embed)
-        else:
-            err_msg = data.get("message", "No keys returned from API response.")
-            await interaction.followup.send(f"❌ Generation Failed: `{err_msg}`", ephemeral=True)
-            
-    except Exception as e:
-        await interaction.followup.send(f"⚠️ API Communication Error: {str(e)}", ephemeral=True)
-
-@bot.tree.command(name="managekey", description="Manage any key (HWID Reset, Ban, Unban, Delete)")
-@discord.app_commands.describe(key="Enter the key you want to manage")
-async def managekey(interaction: discord.Interaction, key: str):
-    if interaction.user.id != OWNER_ID:
-        await interaction.response.send_message("❌ Contact super admin PERSISTX", ephemeral=True)
-        return
-
-    embed = discord.Embed(
-        title="⚙️ Key Control Panel",
-        description=f"Select an action for key:\n`{key}`",
-        color=0x3B82F6
-    )
-    view = get_key_action_view(key.strip())
-    await interaction.response.send_message(embed=embed, view=view, ephemeral=True)
-
-@bot.tree.command(name="keyinfo", description="Get full details & status of any specific key")
-@discord.app_commands.describe(key="Enter the license key to check")
-async def keyinfo(interaction: discord.Interaction, key: str):
-    if interaction.user.id != OWNER_ID:
-        await interaction.response.send_message("❌ Contact super admin PERSISTX", ephemeral=True)
-        return
-
-    await interaction.response.defer(ephemeral=True)
-    
-    payload = {
-        "api_key": API_KEY,
-        "action": "key_info",
-        "app_id": APP_ID,
-        "key": key.strip()
-    }
-    
-    try:
-        resp = requests.post(API_URL, data=payload, headers=HEADERS, timeout=10)
-        data = resp.json()
-        
-        if data.get("success"):
-            info = data.get("data", {}) or data
-            
-            embed = discord.Embed(
-                title="🔍 Key Information Details",
-                color=0x3B82F6
-            )
-            embed.add_field(name="Key", value=f"`{key.strip()}`", inline=False)
-            
-            status = "🔴 Banned" if info.get("banned") else ("🟢 Active" if info.get("status") == "active" or info.get("used") else "🟡 Unused")
-            embed.add_field(name="Status", value=status, inline=True)
-            
-            duration = info.get("duration") or info.get("days") or "N/A"
-            embed.add_field(name="Duration", value=f"{duration} Days", inline=True)
-            
-            hwid = info.get("hwid") or "Not Registered"
-            embed.add_field(name="HWID", value=f"`{hwid}`", inline=False)
-            
-            if info.get("created_at"):
-                embed.add_field(name="Created At", value=str(info.get("created_at")), inline=True)
-                
-            view = get_key_action_view(key.strip())
-            await interaction.followup.send(embed=embed, view=view, ephemeral=True)
-        else:
-            msg = data.get("message", "Key not found or invalid.")
-            await interaction.followup.send(f"❌ Error: `{msg}`", ephemeral=True)
-            
-    except Exception as e:
-        await interaction.followup.send(f"⚠️ API Error: {str(e)}", ephemeral=True)
-
-@bot.tree.command(name="resethwid", description="Reset HWID lock for any existing key")
-@discord.app_commands.describe(key="Enter the key to reset its HWID")
-async def resethwid(interaction: discord.Interaction, key: str):
-    if interaction.user.id != OWNER_ID:
-        await interaction.response.send_message("❌ Contact super admin PERSISTX", ephemeral=True)
-        return
-
-    await interaction.response.defer(ephemeral=True)
-    
-    payload = {
-        "api_key": API_KEY,
-        "action": "reset_hwid",
-        "app_id": APP_ID,
-        "key": key.strip()
-    }
-    
-    try:
-        resp = requests.post(API_URL, data=payload, headers=HEADERS, timeout=10)
-        data = resp.json()
-        
-        if data.get("success"):
-            await interaction.followup.send(f"✓ HWID successfully reset for key:\n`{key.strip()}`", ephemeral=True)
-        else:
-            msg = data.get("message", "Failed to reset HWID.")
-            await interaction.followup.send(f"❌ Failed: `{msg}`", ephemeral=True)
-            
-    except Exception as e:
-        await interaction.followup.send(f"⚠️ API Error: {str(e)}", ephemeral=True)
-
-bot.run(TOKEN)
+            table_content = "```markdown\n"
+            table_content += "| NO | LICENSE KEY          | DURATION   | NOTE        |\n"
+            table_content += "|----|----------------------|------------|-------------|\n"
+            for idx, k in enumerate(keys[:15], 1):
+                table_content += f"| {idx:<2} | {k:<20} | {dur_text:<10} | {note_str[:11]:<11} |\n"
+            table_content += "
