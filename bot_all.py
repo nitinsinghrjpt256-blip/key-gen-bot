@@ -52,8 +52,6 @@ TOKEN = os.getenv("DISCORD_TOKEN")
 GUILD_ID = 1525181999147388958
 OWNER_ID = 1525179499602509977
 
-LOG_CHANNEL_ID = 1547688035796254941  # Logs channel ID
-
 API_URL = "https://auth.terminalx999.online/api_admin.php"
 API_KEY = "TX999_1fc0134c4c418cf9f0817f355ac10cf7e5f73cf899a83bbf4731e4eec3929870"
 APP_ID = "9f087d585fbd666572fc24b7"
@@ -141,7 +139,7 @@ async def on_interaction(interaction: discord.Interaction):
 # 4. BOT COMMANDS
 # ==========================================
 
-@bot.tree.command(name="genkey", description="Generate License Keys in a Color-Coded Professional Table")
+@bot.tree.command(name="genkey", description="Generate License Keys")
 @discord.app_commands.choices(package=[
     discord.app_commands.Choice(name="BASIC PANEL", value="e52c1515c53453b85d0d4e87"),
     discord.app_commands.Choice(name="AIMSILENT EXE", value="affc8da8fd5ace99981ab877"),
@@ -185,66 +183,21 @@ async def genkey(
         
         if data.get("success"):
             keys = parse_keys(data)
-            dur_text = "Lifetime" if days == 0 else f"{days} Days"
-            note_str = note if note else "N/A"
+            dur = "Lifetime" if days == 0 else f"{days} Days"
+            embed = discord.Embed(title="🔑 Package License Key Generated", color=0x22C55E)
+            embed.add_field(name="Package Name", value=f"**{package.name}**", inline=True)
+            embed.add_field(name="Duration", value=dur, inline=True)
+            embed.add_field(name="Count", value=str(len(keys)), inline=True)
             
-            package_colors = {
-                "BASIC PANEL": 0x3498DB,
-                "AIMSILENT EXE": 0xE74C3C,
-                "UID BYPASS": 0x2ECC71,
-                "EXTERNAL PANEL": 0x9B59B6,
-                "PVT AIMKILL": 0xF1C40F,
-                "VAULT PANEL": 0x1ABC9C
-            }
-            embed_color = package_colors.get(package.name, 0x5865F2)
-
-            log_channel = bot.get_channel(LOG_CHANNEL_ID)
-            if log_channel:
-                new_rows = [f"| {k:<20} | {package.name[:13]:<13} | {dur_text:<10} | {note_str[:11]:<11} |" for k in keys]
+            if note:
+                embed.add_field(name="Note", value=f"`{note}`", inline=False)
                 
-                last_msg = None
-                async for msg in log_channel.history(limit=5):
-                    if msg.author == bot.user and "```markdown" in msg.content and "LICENSE KEY" in msg.content:
-                        last_msg = msg
-                        break
+            formatted_keys = "\n".join([f"`{k}`" for k in keys[:20]])
+            if len(keys) > 20:
+                formatted_keys += f"\n... and {len(keys) - 20} more keys"
                 
-                if last_msg:
-                    content = last_msg.content.rstrip("` \n")
-                    for r in new_rows:
-                        content += "\n" + r
-                    content += "\n```"
-                    if len(content) < 1950:
-                        await last_msg.edit(content=content)
-                    else:
-                        log_lines = ["```markdown", "| LICENSE KEY          | PACKAGE       | DURATION   | NOTE        |", "|----------------------|---------------|------------|-------------|"]
-                        log_lines.extend(new_rows)
-                        log_lines.append("```")
-                        await log_channel.send("\n".join(log_lines))
-                else:
-                    log_lines = ["```markdown", "| LICENSE KEY          | PACKAGE       | DURATION   | NOTE        |", "|----------------------|---------------|------------|-------------|"]
-                    log_lines.extend(new_rows)
-                    log_lines.append("```")
-                    await log_channel.send("\n".join(log_lines))
-
-            embed = discord.Embed(title=f"🎨 License Table — [{package.name}]", color=embed_color)
-            embed.description = "Aapki nayi keys ka color-coded table format niche diya gaya hai:"
+            embed.add_field(name="Keys", value=formatted_keys, inline=False)
             
-            ui_lines = [
-                "```markdown",
-                "| NO | LICENSE KEY          | DURATION   | NOTE        |",
-                "|----|----------------------|------------|-------------|"
-            ]
-            for idx, k in enumerate(keys[:15], 1):
-                ui_lines.append(f"| {idx:<2} | {k:<20} | {dur_text:<10} | {note_str[:11]:<11} |")
-            ui_lines.append("```")
-            
-            embed.add_field(name="📦 Package Details", value="\n".join(ui_lines), inline=False)
-            
-            if len(keys) > 15:
-                embed.set_footer(text=f"Showing 15 of {len(keys)} keys. Baaki keys master logs channel me update kar di gayi hain.")
-            else:
-                embed.set_footer(text=f"Total Keys Generated: {len(keys)}")
-
             view = get_key_action_view(keys[0]) if len(keys) == 1 else None
             
             if view:
