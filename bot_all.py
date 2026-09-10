@@ -55,6 +55,8 @@ ALLOWED_USER_IDS = [
     1525179499602509977,
 ]
 
+LOG_CHANNEL_ID = 1547688035796254941  # Logs channel ID
+
 API_URL = "https://auth.terminalx999.online/api_admin.php"
 API_KEY = "TX999_1fc0134c4c418cf9f0817f355ac10cf7e5f73cf899a83bbf4731e4eec3929870"
 APP_ID = "9f087d585fbd666572fc24b7"
@@ -139,7 +141,7 @@ async def on_interaction(interaction: discord.Interaction):
                 await interaction.followup.send(f"⚠️ Error executing action: {str(e)}", ephemeral=True)
 
 # ==========================================
-# 4. BOT COMMANDS (Hidden from normal users via default_member_permissions)
+# 4. BOT COMMANDS
 # ==========================================
 
 @bot.tree.command(name="genkey", description="Generate License Keys")
@@ -187,10 +189,19 @@ async def genkey(
         
         if data.get("success"):
             keys = parse_keys(data)
-            dur = "Lifetime" if days == 0 else f"{days} Days"
+            dur_text = "Lifetime" if days == 0 else f"{days} Days"
+            
+            # Send log to the specified channel
+            log_channel = bot.get_channel(LOG_CHANNEL_ID)
+            if log_channel:
+                for k in keys:
+                    note_str = note if note else "N/A"
+                    log_msg = f"`{k}` : `{note_str}` ; `{dur_text}` ; `{package.name}`"
+                    await log_channel.send(log_msg)
+
             embed = discord.Embed(title="🔑 Package License Key Generated", color=0x22C55E)
             embed.add_field(name="Package Name", value=f"**{package.name}**", inline=True)
-            embed.add_field(name="Duration", value=dur, inline=True)
+            embed.add_field(name="Duration", value=dur_text, inline=True)
             embed.add_field(name="Count", value=str(len(keys)), inline=True)
             
             if note:
