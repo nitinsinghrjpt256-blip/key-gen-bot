@@ -167,6 +167,7 @@ async def genkey(
 
     await interaction.response.defer(ephemeral=False)
     
+    # Note ko panel tak সঠিকভাবে bhejne ke liye multiple parameters add kiye hain
     payload = {
         "api_key": API_KEY,
         "action": "generate_key",
@@ -174,7 +175,9 @@ async def genkey(
         "package_id": package.value,
         "days": days,
         "count": count,
-        "note": note
+        "note": note,
+        "key_name": note,
+        "username": note
     }
     
     try:
