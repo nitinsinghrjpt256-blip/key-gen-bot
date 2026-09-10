@@ -141,7 +141,7 @@ async def on_interaction(interaction: discord.Interaction):
 # 4. BOT COMMANDS
 # ==========================================
 
-@bot.tree.command(name="genkey", description="Generate License Keys in a Table Format")
+@bot.tree.command(name="genkey", description="Generate License Keys in a Professional Table Format")
 @discord.app_commands.choices(package=[
     discord.app_commands.Choice(name="BASIC PANEL", value="e52c1515c53453b85d0d4e87"),
     discord.app_commands.Choice(name="AIMSILENT EXE", value="affc8da8fd5ace99981ab877"),
@@ -188,16 +188,38 @@ async def genkey(
             dur_text = "Lifetime" if days == 0 else f"{days} Days"
             note_str = note if note else "N/A"
             
+            # Smart Log Channel Appending (Ek hi table me nayi keys aage add hongi)
             log_channel = bot.get_channel(LOG_CHANNEL_ID)
             if log_channel:
-                log_lines = ["```markdown", "| LICENSE KEY          | PACKAGE       | DURATION   | NOTE        |", "|----------------------|---------------|------------|-------------|"]
-                for k in keys:
-                    log_lines.append(f"| {k:<20} | {package.name[:13]:<13} | {dur_text:<10} | {note_str[:11]:<11} |")
-                log_lines.append("```")
-                await log_channel.send("\n".join(log_lines))
+                new_rows = [f"| {k:<20} | {package.name[:13]:<13} | {dur_text:<10} | {note_str[:11]:<11} |" for k in keys]
+                
+                last_msg = None
+                async for msg in log_channel.history(limit=5):
+                    if msg.author == bot.user and "```markdown" in msg.content and "LICENSE KEY" in msg.content:
+                        last_msg = msg
+                        break
+                
+                if last_msg:
+                    content = last_msg.content.rstrip("` \n")
+                    for r in new_rows:
+                        content += "\n" + r
+                    content += "\n```"
+                    if len(content) < 1950:
+                        await last_msg.edit(content=content)
+                    else:
+                        log_lines = ["```markdown", "| LICENSE KEY          | PACKAGE       | DURATION   | NOTE        |", "|----------------------|---------------|------------|-------------|"]
+                        log_lines.extend(new_rows)
+                        log_lines.append("```")
+                        await log_channel.send("\n".join(log_lines))
+                else:
+                    log_lines = ["```markdown", "| LICENSE KEY          | PACKAGE       | DURATION   | NOTE        |", "|----------------------|---------------|------------|-------------|"]
+                    log_lines.extend(new_rows)
+                    log_lines.append("```")
+                    await log_channel.send("\n".join(log_lines))
 
-            embed = discord.Embed(title="📊 License Key Generation Table", color=0x5865F2)
-            embed.description = "Aapki nayi keys ka table format niche diya gaya hai:"
+            # User interface ke liye Clean Embed Table
+            embed = discord.Embed(title="📊 License Key Generation Dashboard", color=0x5865F2)
+            embed.description = "Aapki nayi keys successfully generate kar di gayi hain:"
             
             ui_lines = ["```markdown", "| NO | LICENSE KEY          | DURATION   | NOTE        |", "|----|----------------------|------------|-------------|"]
             for idx, k in enumerate(keys[:15], 1):
@@ -207,7 +229,7 @@ async def genkey(
             embed.add_field(name=f"📦 Package: {package.name}", value="\n".join(ui_lines), inline=False)
             
             if len(keys) > 15:
-                embed.set_footer(text=f"Showing 15 of {len(keys)} keys. Baaki keys logs channel me update kar di gayi hain.")
+                embed.set_footer(text=f"Showing 15 of {len(keys)} keys. Baaki keys logs channel ki master table me update kar di gayi hain.")
             else:
                 embed.set_footer(text=f"Total Keys Generated: {len(keys)}")
 
