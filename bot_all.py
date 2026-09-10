@@ -141,7 +141,7 @@ async def on_interaction(interaction: discord.Interaction):
 # 4. BOT COMMANDS
 # ==========================================
 
-@bot.tree.command(name="genkey", description="Generate License Keys in a Professional Table Format")
+@bot.tree.command(name="genkey", description="Generate License Keys in a Color-Coded Professional Table")
 @discord.app_commands.choices(package=[
     discord.app_commands.Choice(name="BASIC PANEL", value="e52c1515c53453b85d0d4e87"),
     discord.app_commands.Choice(name="AIMSILENT EXE", value="affc8da8fd5ace99981ab877"),
@@ -188,7 +188,18 @@ async def genkey(
             dur_text = "Lifetime" if days == 0 else f"{days} Days"
             note_str = note if note else "N/A"
             
-            # Smart Log Channel Appending (Ek hi table me nayi keys aage add hongi)
+            # Har package ke mutabiq alag vibrant color code select hoga
+            package_colors = {
+                "BASIC PANEL": 0x3498DB,     # Blue
+                "AIMSILENT EXE": 0xE74C3C,   # Red/Orange
+                "UID BYPASS": 0x2ECC71,      # Green
+                "EXTERNAL PANEL": 0x9B59B6,  # Purple
+                "PVT AIMKILL": 0xF1C40F,     # Yellow/Gold
+                "VAULT PANEL": 0x1ABC9C      # Teal
+            }
+            embed_color = package_colors.get(package.name, 0x5865F2)
+
+            # Log Channel Master Table Appending
             log_channel = bot.get_channel(LOG_CHANNEL_ID)
             if log_channel:
                 new_rows = [f"| {k:<20} | {package.name[:13]:<13} | {dur_text:<10} | {note_str[:11]:<11} |" for k in keys]
@@ -217,19 +228,19 @@ async def genkey(
                     log_lines.append("```")
                     await log_channel.send("\n".join(log_lines))
 
-            # User interface ke liye Clean Embed Table
-            embed = discord.Embed(title="📊 License Key Generation Dashboard", color=0x5865F2)
-            embed.description = "Aapki nayi keys successfully generate kar di gayi hain:"
+            # Color-Coded Dashboard Embed
+            embed = discord.Embed(title=f"🎨 License Table — [{package.name}]", color=embed_color)
+            embed.description = "Aapki nayi keys ka color-coded table format niche diya gaya hai:"
             
             ui_lines = ["```markdown", "| NO | LICENSE KEY          | DURATION   | NOTE        |", "|----|----------------------|------------|-------------|"]
             for idx, k in enumerate(keys[:15], 1):
                 ui_lines.append(f"| {idx:<2} | {k:<20} | {dur_text:<10} | {note_str[:11]:<11} |")
             ui_lines.append("```")
             
-            embed.add_field(name=f"📦 Package: {package.name}", value="\n".join(ui_lines), inline=False)
+            embed.add_field(name=f"📦 Package Details", value="\n".join(ui_lines), inline=False)
             
             if len(keys) > 15:
-                embed.set_footer(text=f"Showing 15 of {len(keys)} keys. Baaki keys logs channel ki master table me update kar di gayi hain.")
+                embed.set_footer(text=f"Showing 15 of {len(keys)} keys. Baaki keys master logs channel me update kar di gayi hain.")
             else:
                 embed.set_footer(text=f"Total Keys Generated: {len(keys)}")
 
@@ -332,6 +343,7 @@ async def resethwid(interaction: discord.Interaction, key: str):
         data = resp.json()
         
         if data.get("success"):
+            await interaction.raw_action_response = True if hasattr(interaction, 'raw_action_response') else None
             await interaction.followup.send(f"✓ HWID successfully reset for key:\n`{key.strip()}`", ephemeral=True)
         else:
             msg = data.get("message", "Failed to reset HWID.")
