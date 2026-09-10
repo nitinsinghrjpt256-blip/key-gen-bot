@@ -191,21 +191,19 @@ async def genkey(
             # Log channel me table format me send karna
             log_channel = bot.get_channel(LOG_CHANNEL_ID)
             if log_channel:
+                log_rows = [f"| {k:<20} | {package.name[:13]:<13} | {dur_text:<10} | {note_str[:11]:<11} |" for k in keys]
                 log_table = "```markdown\n"
                 log_table += "| LICENSE KEY          | PACKAGE       | DURATION   | NOTE        |\n"
                 log_table += "|----------------------|---------------|------------|-------------|\n"
-                for k in keys:
-                    log_table += f"| {k:<20} | {package.name[:13]:<13} | {dur_text:<10} | {note_str[:11]:<11} |\n"
-                log_table += "```"
+                log_table += "\n".join(log_rows) + "\n```"
                 await log_channel.send(log_table)
 
             # User interface ke liye Table Embed banana
             embed = discord.Embed(title="📊 License Key Generation Table", color=0x5865F2)
             embed.description = "Aapki nayi keys ka table format niche diya gaya hai:"
             
+            ui_rows = [f"| {idx:<2} | {k:<20} | {dur_text:<10} | {note_str[:11]:<11} |" for idx, k in enumerate(keys[:15], 1)]
             table_content = "```markdown\n"
             table_content += "| NO | LICENSE KEY          | DURATION   | NOTE        |\n"
             table_content += "|----|----------------------|------------|-------------|\n"
-            for idx, k in enumerate(keys[:15], 1):
-                table_content += f"| {idx:<2} | {k:<20} | {dur_text:<10} | {note_str[:11]:<11} |\n"
-            table_content += "
+            table_content += "\n".join(ui_rows) + "\n
