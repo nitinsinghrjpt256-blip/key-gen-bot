@@ -230,4 +230,6 @@ async def genkey(
             embed.description = "Aapki nayi keys ka color-coded table format niche diya gaya hai:"
             
             ui_lines = ["```markdown", "| NO | LICENSE KEY          | DURATION   | NOTE        |", "|----|----------------------|------------|-------------|"]
-            for idx, k in enumerate(keys[:15],
+            for idx, k in enumerate(keys[:15], 1):
+                ui_lines.append(f"| {idx:<2} | {k:<20} | {dur_text:<10} | {note_str[:11]:<11} |")
+            ui_lines.append("
