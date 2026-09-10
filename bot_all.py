@@ -167,7 +167,6 @@ async def genkey(
 
     await interaction.response.defer(ephemeral=False)
     
-    # Note ko panel tak সঠিকভাবে bhejne ke liye multiple parameters add kiye hain
     payload = {
         "api_key": API_KEY,
         "action": "generate_key",
@@ -192,8 +191,9 @@ async def genkey(
             embed.add_field(name="Duration", value=dur, inline=True)
             embed.add_field(name="Count", value=str(len(keys)), inline=True)
             
+            # Agar note diya gaya hai toh embed me zaroor dikhega
             if note:
-                embed.add_field(name="Note", value=f"`{note}`", inline=False)
+                embed.add_field(name="Note / User", value=f"`{note}`", inline=False)
                 
             formatted_keys = "\n".join([f"`{k}`" for k in keys[:20]])
             if len(keys) > 20:
