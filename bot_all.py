@@ -142,7 +142,6 @@ async def on_interaction(interaction: discord.Interaction):
 # ==========================================
 
 @bot.tree.command(name="genkey", description="Generate License Keys")
-@discord.app_commands.default_member_permissions(administrator=True)
 @discord.app_commands.choices(package=[
     discord.app_commands.Choice(name="BASIC PANEL", value="e52c1515c53453b85d0d4e87"),
     discord.app_commands.Choice(name="AIMSILENT EXE", value="affc8da8fd5ace99981ab877"),
@@ -224,7 +223,6 @@ async def genkey(
         await interaction.followup.send(f"⚠️ API Communication Error: {str(e)}", ephemeral=True)
 
 @bot.tree.command(name="managekey", description="Manage any key (HWID Reset, Ban, Unban, Delete)")
-@discord.app_commands.default_member_permissions(administrator=True)
 @discord.app_commands.describe(key="Enter the key you want to manage")
 async def managekey(interaction: discord.Interaction, key: str):
     if interaction.user.id != OWNER_ID:
@@ -240,7 +238,6 @@ async def managekey(interaction: discord.Interaction, key: str):
     await interaction.response.send_message(embed=embed, view=view, ephemeral=True)
 
 @bot.tree.command(name="keyinfo", description="Get full details & status of any specific key")
-@discord.app_commands.default_member_permissions(administrator=True)
 @discord.app_commands.describe(key="Enter the license key to check")
 async def keyinfo(interaction: discord.Interaction, key: str):
     if interaction.user.id != OWNER_ID:
@@ -291,7 +288,6 @@ async def keyinfo(interaction: discord.Interaction, key: str):
         await interaction.followup.send(f"⚠️ API Error: {str(e)}", ephemeral=True)
 
 @bot.tree.command(name="resethwid", description="Reset HWID lock for any existing key")
-@discord.app_commands.default_member_permissions(administrator=True)
 @discord.app_commands.describe(key="Enter the key to reset its HWID")
 async def resethwid(interaction: discord.Interaction, key: str):
     if interaction.user.id != OWNER_ID:
